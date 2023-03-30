@@ -11,8 +11,7 @@ export enum GameFieldSize {
 }
 
 export enum GameSpeeds {
-    OneX = "1x",
-    FiveX = "5x",
-    TenX = "10x",
-    TwentyX = "20x",
+    OneX = 1,
+    FiveX = 5,
+    TenX = 10,
 }

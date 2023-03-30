@@ -27,7 +27,7 @@ const AppHeader: FC = () => {
                     className={activePage === AppRoutes.Game ? s.active : ""}
                     onClick={handleChangePage}
                 >
-                    Старт
+                    Игра
                 </button>
                 <button
                     name={AppRoutes.Rules}

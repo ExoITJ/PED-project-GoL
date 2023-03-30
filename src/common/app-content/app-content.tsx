@@ -4,6 +4,7 @@ import ErrorBoundary from "../error-boundary";
 import { AppRoutes } from "../routes";
 
 const RulesScreen = lazy(() => import("../../features/rules/rules-screen"));
+const LifesScreen = lazy(() => import("../../features/lifes/lifes-screen"));
 
 const AppContent: FC = () => {
     return (
@@ -14,7 +15,7 @@ const AppContent: FC = () => {
                         path={AppRoutes.Any}
                         element={<div style={{ color: "white" }}>Ты не туда попал братишка</div>}
                     />
-                    <Route path={AppRoutes.Game} element={<div>Тут игра</div>} />
+                    <Route path={AppRoutes.Game} element={<LifesScreen />} />
                     <Route path={AppRoutes.Rules} element={<RulesScreen />} />
                 </Routes>
             </ErrorBoundary>
