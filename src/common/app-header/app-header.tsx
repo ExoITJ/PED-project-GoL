@@ -17,9 +17,9 @@ const AppHeader: FC = () => {
     return (
         <Header className={s.header}>
             <div className={s.logo}>
-                <div>GAME</div>
-                <div>of</div>
-                <div>LIFE</div>
+                <div>ИГРА</div>
+                <div>в</div>
+                <div> ЖИЗНЬ</div>
             </div>
             <div className={s.button}>
                 <button

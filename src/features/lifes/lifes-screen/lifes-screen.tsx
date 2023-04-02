@@ -1,53 +1,68 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useEffect, useRef, MouseEventHandler, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/store";
 import {
-    selectGameSettingsFieldSize,
-    selectGameSettingsMode,
+    selectGameFiledXAxis,
+    selectGameFiledYAxis,
+    selectGameGeneration,
+    selectGameNet,
     selectGameSettingsSpeed,
 } from "../../game-settings/game-settings-selectors";
-import { GameModes } from "../../game-settings/game-settings-types";
-import { calculateGrid } from "../lifes.utils";
+import { GameFieldSize, GameModes } from "../../game-settings/game-settings-types";
 import cloneDeep from "lodash/cloneDeep";
-import { changeGameMode, resetGameSettings } from "../../game-settings/game-settings-slice";
+import {
+    changeGameMode,
+    increaseGameGeneration,
+    changeGameNet,
+    resetGameSettings,
+    changeGameFieldSize,
+} from "../../game-settings/game-settings-slice";
 import { Button, Col, Row, Space } from "antd";
+import GameNet from "../../../common/game-net/game-net";
 
 const LifesScreen: FC = () => {
     const dispatch = useAppDispatch();
 
-    const mode = useAppSelector(selectGameSettingsMode);
-    const fieldSize = useAppSelector(selectGameSettingsFieldSize);
+    const gameNet = useAppSelector(selectGameNet);
+    const xAxis = useAppSelector(selectGameFiledXAxis);
+    const yAxis = useAppSelector(selectGameFiledYAxis);
     const speed = useAppSelector(selectGameSettingsSpeed);
-
-    const [xAxis, setXAxis] = useState(20);
-    const [yAxis, setYAxis] = useState(20);
-    const [grid, setGrid] = useState<boolean[][]>([]);
-    const [generation, setGeneration] = useState(0);
+    const generation = useAppSelector(selectGameGeneration);
     const intervalRef = useRef<number>();
-
-    useEffect(() => {
-        const newGrid = calculateGrid(xAxis, yAxis);
-        setGrid(newGrid);
-    }, [xAxis, yAxis]);
-
-    useEffect(() => {
-        if (mode === GameModes.Start) {
-            intervalRef.current = window.setInterval(logicOfLife, speed);
-        }
-        return () => {
-            clearInterval(intervalRef.current);
-        };
-    }, [grid, speed, mode]);
 
     useEffect(() => {
         return () => {
             dispatch(resetGameSettings());
+            clearInterval(intervalRef.current);
         };
     }, []);
+
+    const gameLogic = () => {
+        const newNet = cloneDeep(gameNet);
+
+        for (let i = 0; i < xAxis; i++) {
+            for (let j = 0; j < yAxis; j++) {
+                let count = 0;
+                if (i > 0) if (newNet[i - 1][j]) count++;
+                if (i > 0 && j > 0) if (newNet[i - 1][j - 1]) count++;
+                if (i > 0 && j < yAxis - 1) if (newNet[i - 1][j + 1]) count++;
+                if (j < yAxis - 1) if (newNet[i][j + 1]) count++;
+                if (j > 0) if (newNet[i][j - 1]) count++;
+                if (i < xAxis - 1) if (newNet[i + 1][j]) count++;
+                if (i < xAxis - 1 && j > 0) if (newNet[i + 1][j - 1]) count++;
+                if (i < xAxis - 1 && yAxis - 1) if (newNet[i + 1][j + 1]) count++;
+                if (newNet[i][j] && (count < 2 || count > 3)) newNet[i][j] = false;
+                if (!newNet[i][j] && count === 3) newNet[i][j] = true;
+            }
+        }
+
+        dispatch(changeGameNet(newNet));
+        dispatch(increaseGameGeneration(1));
+    };
 
     const handleStart = () => {
         dispatch(changeGameMode(GameModes.Start));
         clearInterval(intervalRef.current);
-        intervalRef.current = window.setInterval(logicOfLife, speed);
+        intervalRef.current = window.setInterval(gameLogic, speed);
     };
 
     const handleStop = () => {
@@ -56,40 +71,18 @@ const LifesScreen: FC = () => {
     };
 
     const handleReset = () => {
-        const newGrid = calculateGrid(xAxis, yAxis);
-        dispatch(changeGameMode(GameModes.Reset));
-        setGeneration(0);
-        setGrid(newGrid);
+        dispatch(resetGameSettings());
         clearInterval(intervalRef.current);
     };
 
     const handleRandom = () => {
-        const newGrid = grid.map((rowArr) => rowArr.map(() => Math.floor(Math.random() * 4) === 1));
-        setGrid(newGrid);
+        const newNet = gameNet.map((rowArr) => rowArr.map(() => Math.floor(Math.random() * 4) === 1));
+        dispatch(changeGameNet(newNet));
     };
 
-    const logicOfLife = () => {
-        const gridClone = grid;
-        const newGrid = cloneDeep(grid);
-
-        for (let i = 0; i < xAxis; i++) {
-            for (let j = 0; j < yAxis; j++) {
-                let count = 0;
-                if (i > 0) if (gridClone[i - 1][j]) count++;
-                if (i > 0 && j > 0) if (gridClone[i - 1][j - 1]) count++;
-                if (i > 0 && j < yAxis - 1) if (gridClone[i - 1][j + 1]) count++;
-                if (j < yAxis - 1) if (gridClone[i][j + 1]) count++;
-                if (j > 0) if (gridClone[i][j - 1]) count++;
-                if (i < xAxis - 1) if (gridClone[i + 1][j]) count++;
-                if (i < xAxis - 1 && j > 0) if (gridClone[i + 1][j - 1]) count++;
-                if (i < xAxis - 1 && yAxis - 1) if (gridClone[i + 1][j + 1]) count++;
-                if (gridClone[i][j] && (count < 2 || count > 3)) newGrid[i][j] = false;
-                if (!gridClone[i][j] && count === 3) newGrid[i][j] = true;
-            }
-        }
-
-        setGrid(newGrid);
-        setGeneration((prev) => prev + 1);
+    const handleChangeFieldSize: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement> = (e) => {
+        const { name } = e.currentTarget;
+        dispatch(changeGameFieldSize(name as GameFieldSize));
     };
 
     return (
@@ -97,23 +90,35 @@ const LifesScreen: FC = () => {
             <Col span={24} className="gutter-row" style={{ display: "flex", justifyContent: "center" }}>
                 <Space>
                     <Space.Compact direction="horizontal">
-                        <Button type="dashed" size="large">
+                        <Button type="dashed" size="large" onClick={handleStart}>
                             Старт
                         </Button>
-                        <Button type="dashed" size="large">
+                        <Button type="dashed" size="large" onClick={handleStop}>
                             Пауза
                         </Button>
-                        <Button type="dashed" size="large">
+                        <Button type="dashed" size="large" onClick={handleRandom}>
                             Автозаполнение
                         </Button>
-                        <Button type="dashed" size="large">
+                        <Button type="dashed" size="large" onClick={handleReset}>
                             Сброс
                         </Button>
+                        <Button name={GameFieldSize.Small} type="dashed" size="large" onClick={handleChangeFieldSize}>
+                            Малое поле
+                        </Button>
+                        <Button name={GameFieldSize.Medium} type="dashed" size="large" onClick={handleChangeFieldSize}>
+                            Среднее поле
+                        </Button>
+                        <Button name={GameFieldSize.Large} type="dashed" size="large" onClick={handleChangeFieldSize}>
+                            Большое поле
+                        </Button>
                     </Space.Compact>
+                    Сгенерировано: {generation}
                 </Space>
             </Col>
             <Col span={24} className="gutter-row" style={{ display: "flex", justifyContent: "center" }}>
-                <Space>Что-то тут</Space>
+                <Space>
+                    <GameNet />
+                </Space>
             </Col>
         </Row>
     );

@@ -1,0 +1,30 @@
+$diedColor: rgba(255, 255, 255, 0.95);
+$aliveColor: rgb(139, 0, 0);
+
+.gameNet {
+    line-height: 0;
+    margin: auto;
+    box-shadow: 0px 0px 10px white;
+    margin-top: 20px;
+
+    .life {
+        display: inline-block;
+        border: 1px solid black;
+        width: 15px;
+        height: 15px;
+        margin-left: -1px;
+        margin-bottom: -1px;
+
+        &:hover {
+            background-color: turquoise;
+        }
+    }
+}
+
+.died {
+    background-color: $diedColor;
+}
+
+.alive {
+    background-color: $aliveColor;
+}
