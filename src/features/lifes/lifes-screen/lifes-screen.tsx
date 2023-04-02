@@ -1,14 +1,11 @@
-import { FC, useEffect, useRef, MouseEventHandler, useCallback } from "react";
+import { FC, useEffect, useRef, MouseEventHandler } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/store";
 import {
-    selectGameFiledXAxis,
-    selectGameFiledYAxis,
     selectGameGeneration,
     selectGameNet,
     selectGameSettingsSpeed,
 } from "../../game-settings/game-settings-selectors";
 import { GameFieldSize, GameModes } from "../../game-settings/game-settings-types";
-import cloneDeep from "lodash/cloneDeep";
 import {
     changeGameMode,
     increaseGameGeneration,
@@ -23,8 +20,6 @@ const LifesScreen: FC = () => {
     const dispatch = useAppDispatch();
 
     const gameNet = useAppSelector(selectGameNet);
-    const xAxis = useAppSelector(selectGameFiledXAxis);
-    const yAxis = useAppSelector(selectGameFiledYAxis);
     const speed = useAppSelector(selectGameSettingsSpeed);
     const generation = useAppSelector(selectGameGeneration);
     const intervalRef = useRef<number>();
@@ -36,33 +31,14 @@ const LifesScreen: FC = () => {
         };
     }, []);
 
-    const gameLogic = () => {
-        const newNet = cloneDeep(gameNet);
-
-        for (let i = 0; i < xAxis; i++) {
-            for (let j = 0; j < yAxis; j++) {
-                let count = 0;
-                if (i > 0) if (newNet[i - 1][j]) count++;
-                if (i > 0 && j > 0) if (newNet[i - 1][j - 1]) count++;
-                if (i > 0 && j < yAxis - 1) if (newNet[i - 1][j + 1]) count++;
-                if (j < yAxis - 1) if (newNet[i][j + 1]) count++;
-                if (j > 0) if (newNet[i][j - 1]) count++;
-                if (i < xAxis - 1) if (newNet[i + 1][j]) count++;
-                if (i < xAxis - 1 && j > 0) if (newNet[i + 1][j - 1]) count++;
-                if (i < xAxis - 1 && yAxis - 1) if (newNet[i + 1][j + 1]) count++;
-                if (newNet[i][j] && (count < 2 || count > 3)) newNet[i][j] = false;
-                if (!newNet[i][j] && count === 3) newNet[i][j] = true;
-            }
-        }
-
-        dispatch(changeGameNet(newNet));
+    const gameIsOn = () => {
+        dispatch(changeGameMode(GameModes.Start));
         dispatch(increaseGameGeneration(1));
     };
 
     const handleStart = () => {
-        dispatch(changeGameMode(GameModes.Start));
         clearInterval(intervalRef.current);
-        intervalRef.current = window.setInterval(gameLogic, speed);
+        intervalRef.current = window.setInterval(gameIsOn, speed);
     };
 
     const handleStop = () => {
@@ -83,6 +59,7 @@ const LifesScreen: FC = () => {
     const handleChangeFieldSize: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement> = (e) => {
         const { name } = e.currentTarget;
         dispatch(changeGameFieldSize(name as GameFieldSize));
+        clearInterval(intervalRef.current);
     };
 
     return (

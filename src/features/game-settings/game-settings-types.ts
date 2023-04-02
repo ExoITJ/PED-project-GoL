@@ -5,9 +5,9 @@ export enum GameModes {
 }
 
 export enum GameSpeeds {
-    OneX = 1500,
-    FiveX = 1000,
-    TenX = 500,
+    OneX = 1000,
+    FiveX = 200,
+    TenX = 100,
 }
 
 export enum GameFieldSize {
